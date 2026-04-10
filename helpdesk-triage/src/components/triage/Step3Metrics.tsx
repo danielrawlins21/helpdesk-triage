@@ -25,19 +25,11 @@ const fields: Array<{
   },
   {
     key: "pa",
-    label: "Presión arterial (TA)",
+    label: "Presión arterial (sistólica)",
     alertLabel: "TA",
     hint: "Ref: 90-140 mmHg",
     min: 0,
     max: 300,
-  },
-  {
-    key: "fr",
-    label: "Frecuencia respiratoria",
-    alertLabel: "FR",
-    hint: "Ref: 12-20 rpm",
-    min: 0,
-    max: 80,
   },
   {
     key: "temp",
@@ -64,26 +56,26 @@ export function Step3Metrics({ metrics, errors, onChange }: Step3MetricsProps) {
   return (
     <section className="space-y-5">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 3</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Signos vitales</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Paso 6 de 7</p>
+        <h2 className="mt-1 text-base font-semibold text-slate-900">Signos vitales (si los tienes)</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Si tienes un aparato, ingresa los valores. Si no los sabes, déjalos en blanco.
+          Si tienes un tensiómetro u oxímetro, ingresa los valores. Si no, déjalos en blanco.
         </p>
       </div>
 
       {alerts.length > 0 ? (
-        <div className="rounded-xl border border-red-700 bg-red-100 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           Valor fuera de rango normal detectado
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {fields.map((field) => {
           const value = metrics[field.key];
           const isAlert = alertSet.has(field.alertLabel);
           return (
-            <label key={field.key} className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{field.label}</span>
+            <label key={field.key} className="block rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <span className="mb-2 block text-sm font-semibold leading-5 text-slate-700">{field.label}</span>
               <input
                 type="number"
                 min={field.min}
@@ -93,10 +85,10 @@ export function Step3Metrics({ metrics, errors, onChange }: Step3MetricsProps) {
                   const raw = event.target.value;
                   onChange(field.key, raw === "" ? undefined : Number(raw));
                 }}
-                className={`w-full rounded-lg border bg-white px-4 py-3 text-sm outline-none transition ${
+                className={`w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
                   errors[field.key] || isAlert
                     ? "border-red-600 text-red-700"
-                    : "border-slate-300 text-slate-700"
+                    : "border-slate-200 text-slate-700"
                 }`}
               />
               <span className="mt-1 block text-xs text-slate-500">{field.hint}</span>

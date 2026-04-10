@@ -1,34 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --color-brand: #1b4f72;
-  --color-brand-dark: #163a52;
-  --color-cream: #f7f9fb;
-  --color-copy: #163041;
-  --color-danger: #c0392b;
-  --color-warning: #e67e22;
-  --color-success: #27ae60;
-  --color-soft-danger: #fadbd8;
-  --color-soft-blue: #d6eaf8;
+  --color-brand: #2563eb;
+  --color-brand-dark: #1b3a5c;
+  --color-cream: #f4f6f9;
+  --color-copy: #1a202c;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #16a34a;
+  --color-soft-danger: #fef2f2;
+  --color-soft-blue: #eff4ff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f0f2f5;
+  --color-border: #e2e6ec;
 }
 
 html {
-  font-family: system-ui, sans-serif;
+  font-family: "DM Sans", "Aptos", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top, #d6eaf8 0%, #f7f9fb 45%, #eff4f7 100%);
+    radial-gradient(circle at top left, #eff4ff 0%, #f4f6f9 36%, #eef2f7 100%);
   color: var(--color-copy);
 }
 
 body {
   min-height: 100vh;
+  margin: 0;
 }
 
 .app-shell {
   margin: 0 auto;
   min-height: 100vh;
-  max-width: 460px;
+  max-width: 480px;
 }
 
 .ticket-shadow {
-  box-shadow: 0 18px 45px rgba(22, 48, 65, 0.08);
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 1px 3px rgba(15, 23, 42, 0.06);
 }

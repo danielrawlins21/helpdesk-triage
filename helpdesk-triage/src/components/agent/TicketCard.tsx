@@ -1,5 +1,7 @@
+import { useState } from "react";
+import { getSelectedAlarmItems } from "../../lib/alarms";
 import { getBadMetricLabels } from "../../lib/classify";
-import type { TicketLevel, TicketRecord } from "../../lib/types";
+import type { Specialty, TicketLevel, TicketRecord } from "../../lib/types";
 
 const levelStyles: Record<TicketLevel, string> = {
   "NIVEL 1": "bg-red-700 text-white",
@@ -29,16 +31,15 @@ const timeMap: Record<string, string> = {
 const stateMap: Record<string, string> = {
   orientado: "Consciente y orientado",
   confuso: "Confundido o desorientado",
+  somnoliento: "Somnoliento o difícil de despertar",
   inconsciente: "No puede responder solo",
 };
 
-const alarmLabels: Record<string, string> = {
-  dolor_fuerte: "Dolor muy fuerte",
-  respiracion: "Dificultad respiratoria",
-  sangrado: "Sangrado abundante",
-  desmayo: "Desmayo",
-  vomito_sangre: "Vómito sangre / heces negras",
-  paralisis: "Parálisis / adormecimiento",
+const specialtyMap: Record<Specialty, string> = {
+  pediatria: "Pediatría",
+  ginecologia: "Ginecología",
+  cirugia: "Cirugía",
+  interna: "Medicina Interna",
 };
 
 const backgroundLabels: Record<string, string> = {
@@ -48,6 +49,8 @@ const backgroundLabels: Record<string, string> = {
   hipertension: "Hipertensión",
   asma: "Asma / respiratorios",
   cancer: "Cáncer / quimioterapia",
+  renal: "Enfermedad del riñón",
+  anticoag: "Tomo anticoagulantes",
   ninguna: "Ninguna",
   otra: "Otra condición",
 };
@@ -59,66 +62,123 @@ interface TicketCardProps {
 }
 
 export function TicketCard({ ticket, onConfirm, onReclassify }: TicketCardProps) {
-  const activeAlarms = Object.entries(ticket.data.alarmas).filter(([, enabled]) => enabled);
+  const [showReclassify, setShowReclassify] = useState(false);
+  const activeAlarms = getSelectedAlarmItems(ticket.data.alarmas, ticket.data.especialidad);
   const badMetrics = getBadMetricLabels(ticket.data.vitals);
+  const metrics = [
+    { label: "FC", value: ticket.data.vitals.fc },
+    { label: "TA", value: ticket.data.vitals.pa },
+    { label: "Temp", value: ticket.data.vitals.temp },
+    { label: "SpO2", value: ticket.data.vitals.sat },
+  ];
+  const hasMetrics = metrics.some(({ value }) => typeof value === "number");
+
+  function handleConfirm() {
+    setShowReclassify(false);
+    onConfirm(ticket.id);
+  }
+
+  function handleReclassify(level: TicketLevel) {
+    setShowReclassify(false);
+    onReclassify(ticket.id, level);
+  }
 
   return (
-    <article className="rounded-2xl bg-white p-5 ticket-shadow">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-slate-400">Ticket #{ticket.number}</p>
-          <h3 className="mt-2 text-lg font-semibold text-slate-900">
+    <article className="rounded-3xl bg-white p-5 ring-1 ring-slate-200/80 ticket-shadow">
+      <div className="flex items-center gap-3">
+        <span
+          className="h-3.5 w-3.5 shrink-0 rounded-full shadow-sm"
+          style={{ backgroundColor: ticket.classification.color }}
+        />
+        <div className="min-w-0">
+          <p className="text-base font-semibold text-slate-900">Ticket #{ticket.number}</p>
+          <h3 className="mt-0.5 text-xs text-slate-500">
+            {ticket.data.especialidad ? specialtyMap[ticket.data.especialidad] : "Sin especialidad"} ·{" "}
             {categoryMap[ticket.data.categoria] ?? "Sin categoría"}
           </h3>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${levelStyles[ticket.classification.level]}`}>
-          {ticket.classification.level}
+        <span
+          className={`ml-auto rounded-full px-3 py-1 text-xs font-semibold ${levelStyles[ticket.classification.level]}`}
+        >
+          {ticket.confirmed ? "Confirmado" : "Pendiente"}
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-3 text-xs text-slate-600">
-        <div className="rounded-lg bg-slate-50 p-3">
-          <p className="font-medium text-slate-800">Evolución</p>
-          <p>{timeMap[ticket.data.tiempo] ?? "N/D"}</p>
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600">
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Motivo</p>
+          <p className="mt-1 font-semibold text-slate-800">{categoryMap[ticket.data.categoria] ?? "N/D"}</p>
         </div>
-        <div className="rounded-lg bg-slate-50 p-3">
-          <p className="font-medium text-slate-800">Dolor</p>
-          <p>{ticket.data.pain}/10</p>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Especialidad</p>
+          <p className="mt-1 font-semibold text-slate-800">
+            {ticket.data.especialidad ? specialtyMap[ticket.data.especialidad] : "N/D"}
+          </p>
         </div>
-        <div className="rounded-lg bg-slate-50 p-3">
-          <p className="font-medium text-slate-800">Estado mental</p>
-          <p>{stateMap[ticket.data.estado] ?? "N/D"}</p>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Evolución</p>
+          <p className="mt-1 font-semibold text-slate-800">{timeMap[ticket.data.tiempo] ?? "N/D"}</p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Dolor</p>
+          <p
+            className={`mt-1 font-semibold ${
+              ticket.data.pain >= 7 ? "text-red-700" : ticket.data.pain >= 4 ? "text-amber-600" : "text-slate-800"
+            }`}
+          >
+            {ticket.data.pain}/10
+          </p>
+        </div>
+        <div className="col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Estado mental</p>
+          <p
+            className={`mt-1 font-semibold ${
+              ticket.data.estado === "inconsciente"
+                ? "text-red-700"
+                : ticket.data.estado === "confuso" || ticket.data.estado === "somnoliento"
+                  ? "text-amber-600"
+                  : "text-slate-800"
+            }`}
+          >
+            {stateMap[ticket.data.estado] ?? "N/D"}
+          </p>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {[
-          ["FC", ticket.data.vitals.fc],
-          ["TA", ticket.data.vitals.pa],
-          ["FR", ticket.data.vitals.fr],
-          ["Temp", ticket.data.vitals.temp],
-          ["SpO2", ticket.data.vitals.sat],
-        ].map(([label, value]) => {
-          if (typeof value !== "number") return null;
-          const isBad = badMetrics.includes(label);
-          return (
-            <span
-              key={label}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                isBad ? "bg-red-100 text-red-800" : "bg-slate-100 text-slate-700"
-              }`}
-            >
-              {label}: {value}
-            </span>
-          );
-        })}
-      </div>
+      {hasMetrics ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {metrics.map(({ label, value }) => {
+            if (typeof value !== "number") return null;
+            const isBad = badMetrics.includes(label);
+            return (
+              <span
+                key={label}
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  isBad ? "border-red-200 bg-red-50 text-red-800" : "border-slate-200 bg-slate-50 text-slate-600"
+                }`}
+              >
+                {label}: {value}
+              </span>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mt-4 text-xs text-slate-500">Vitales: no ingresados</p>
+      )}
 
       {activeAlarms.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          {activeAlarms.map(([alarm]) => (
-            <span key={alarm} className="rounded-full border border-red-700 bg-red-100 px-3 py-1 text-xs text-red-800">
-              {alarmLabels[alarm]}
+          {activeAlarms.map((alarm) => (
+            <span
+              key={alarm.key}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                alarm.critical
+                  ? "border-red-200 bg-red-50 font-semibold text-red-800"
+                  : "border-amber-300 bg-amber-50 text-amber-800"
+              }`}
+            >
+              {alarm.critical ? "Crítico: " : ""}
+              {alarm.text}
             </span>
           ))}
         </div>
@@ -134,38 +194,62 @@ export function TicketCard({ ticket, onConfirm, onReclassify }: TicketCardProps)
         </div>
       ) : null}
 
-      <div className="mt-5 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white">
+      <div
+        className="mt-5 rounded-2xl px-4 py-3 text-sm"
+        style={{
+          backgroundColor: ticket.confirmed ? `${ticket.classification.color}22` : "#1B3A5C",
+          color: ticket.confirmed ? ticket.classification.color : "#ffffff",
+        }}
+      >
         <p className="font-semibold">
-          Clasificación IA (MTS+ESI): {ticket.classification.level} · {ticket.classification.time}
+          {ticket.confirmed ? "Clasificación médica" : "Clasificación IA (MTS+ESI)"}:{" "}
+          {ticket.classification.level} - {ticket.classification.cat} ({ticket.classification.time})
         </p>
-        <p className="mt-1 text-slate-300">{ticket.classification.msg}</p>
+        <p className={`mt-1 ${ticket.confirmed ? "" : "text-slate-300"}`}>
+          {ticket.confirmed ? "Clasificación confirmada por el médico." : ticket.classification.msg}
+        </p>
       </div>
 
-      <div className="mt-5 flex gap-3">
-        <button
-          type="button"
-          onClick={() => onConfirm(ticket.id)}
-          className="flex-1 rounded-lg bg-sky-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900"
-        >
-          Confirmar IA
-        </button>
-      </div>
+      {!ticket.confirmed ? (
+        <div className="mt-5 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="rounded-full bg-[#1B3A5C] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#152E4A]"
+            >
+              Confirmar IA
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowReclassify((current) => !current)}
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
+            >
+              Reclasificar
+            </button>
+          </div>
 
-      <div className="mt-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Reclasificar</p>
-        <div className="grid grid-cols-5 gap-2">
-        {(["NIVEL 1", "NIVEL 2", "NIVEL 3", "NIVEL 4", "NIVEL 5"] as TicketLevel[]).map((level) => (
-          <button
-            key={level}
-            type="button"
-            onClick={() => onReclassify(ticket.id, level)}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold ${levelStyles[level]}`}
-          >
-            {level.replace("NIVEL ", "N")}
-          </button>
-        ))}
+          {showReclassify ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Selecciona nueva clasificación
+              </p>
+              <div className="space-y-2">
+                {(["NIVEL 1", "NIVEL 2", "NIVEL 3", "NIVEL 4", "NIVEL 5"] as TicketLevel[]).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => handleReclassify(level)}
+                    className={`w-full rounded-xl px-3 py-2 text-left text-xs font-semibold ${levelStyles[level]}`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : null}
     </article>
   );
 }

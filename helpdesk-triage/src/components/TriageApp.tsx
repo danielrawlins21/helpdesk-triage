@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AgentPanel } from "./agent/AgentPanel";
 import { Step1Category } from "./triage/Step1Category";
+import { Step2Specialty } from "./triage/Step2Specialty";
 import { Step2Impact } from "./triage/Step2Impact";
 import { Step3Metrics } from "./triage/Step3Metrics";
 import { Step4WorkState } from "./triage/Step4WorkState";
@@ -11,10 +12,19 @@ import { Step5Alarms } from "./triage/Step5Alarms";
 import { Step6Context } from "./triage/Step6Context";
 import { TicketResult } from "./triage/TicketResult";
 import { classify } from "../lib/classify";
-import { defaultTriageData, type Classification, type TicketLevel, type TicketRecord, type TriageData } from "../lib/types";
+import {
+  defaultTriageData,
+  type BackgroundType,
+  type Classification,
+  type Specialty,
+  type TicketLevel,
+  type TicketRecord,
+  type TriageData,
+} from "../lib/types";
 
 const triageSchema = z.object({
   categoria: z.string().min(1, "Selecciona una categoría para continuar."),
+  especialidad: z.string().min(1, "Selecciona un área para continuar."),
   tiempo: z.string().optional(),
   pain: z.number().min(0).max(10),
   vitals: z.object({
@@ -25,52 +35,45 @@ const triageSchema = z.object({
     sat: z.number().min(0).max(100).optional(),
   }),
   estado: z.string().min(1, "Selecciona tu estado mental actual."),
-  alarmas: z.object({
-    dolor_fuerte: z.boolean(),
-    respiracion: z.boolean(),
-    sangrado: z.boolean(),
-    desmayo: z.boolean(),
-    vomito_sangre: z.boolean(),
-    paralisis: z.boolean(),
-  }),
+  alarmas: z.record(z.boolean()),
   antecedentes: z.array(z.string()),
 });
 
-const totalSteps = 6;
+const totalSteps = 7;
 
 const reclassifiedLevels: Record<TicketLevel, Classification> = {
   "NIVEL 1": {
     level: "NIVEL 1",
     cat: "Emergencia absoluta",
-    color: "#C0392B",
+    color: "#DC2626",
     time: "Inmediato",
     msg: "Reclasificado por médico para atención inmediata.",
   },
   "NIVEL 2": {
     level: "NIVEL 2",
     cat: "Emergencia",
-    color: "#E67E22",
+    color: "#D97706",
     time: "< 15 min",
     msg: "Reclasificado por médico como caso urgente.",
   },
   "NIVEL 3": {
     level: "NIVEL 3",
     cat: "Urgencia alta",
-    color: "#D4AC0D",
+    color: "#B45309",
     time: "< 60 min",
     msg: "Reclasificado por médico con urgencia alta.",
   },
   "NIVEL 4": {
     level: "NIVEL 4",
     cat: "Urgencia baja",
-    color: "#27AE60",
+    color: "#16A34A",
     time: "1-2 horas",
     msg: "Reclasificado por médico para vigilancia.",
   },
   "NIVEL 5": {
     level: "NIVEL 5",
     cat: "No urgente",
-    color: "#2980B9",
+    color: "#0284C7",
     time: "Puede esperar",
     msg: "Reclasificado por médico como no urgente.",
   },
@@ -110,9 +113,28 @@ export default function TriageApp() {
   const values = watch();
   const currentTicket = tickets.find((ticket) => ticket.id === currentTicketId) ?? null;
 
+  function handleVitalChange<K extends keyof TriageData["vitals"]>(
+    key: K,
+    value: TriageData["vitals"][K],
+  ) {
+    setValue(
+      "vitals",
+      {
+        ...values.vitals,
+        [key]: value,
+      },
+      { shouldValidate: true },
+    );
+  }
+
   async function handleNext() {
     if (currentStep === 1) {
       const valid = await trigger("categoria");
+      if (!valid) return;
+    }
+
+    if (currentStep === 2) {
+      const valid = await trigger("especialidad");
       if (!valid) return;
     }
 
@@ -128,11 +150,43 @@ export default function TriageApp() {
     setCurrentStep((step) => Math.max(1, step - 1));
   }
 
-  function resetFlow() {
+  function resetPatientFlow() {
     reset(defaultTriageData);
     setCurrentStep(1);
     setCurrentTicketId(null);
     setActiveTab("triage");
+  }
+
+  function clearTickets() {
+    setTickets([]);
+    setCurrentTicketId(null);
+  }
+
+  function handleSpecialtySelect(value: Specialty) {
+    setValue("especialidad", value, { shouldValidate: true });
+    setValue("alarmas", {}, { shouldValidate: true });
+  }
+
+  function toggleAlarm(key: string) {
+    setValue(
+      "alarmas",
+      {
+        ...values.alarmas,
+        [key]: !values.alarmas[key],
+      },
+      { shouldValidate: true },
+    );
+  }
+
+  function toggleBackground(value: BackgroundType) {
+    if (value === "ninguna") {
+      const nextValue: BackgroundType[] = values.antecedentes.includes("ninguna") ? [] : ["ninguna"];
+      setValue("antecedentes", nextValue, { shouldValidate: true });
+      return;
+    }
+
+    const currentWithoutNone = values.antecedentes.filter((background) => background !== "ninguna");
+    setValue("antecedentes", toggleArrayValue(currentWithoutNone, value), { shouldValidate: true });
   }
 
   function updateTicket(id: string, updater: (ticket: TicketRecord) => TicketRecord) {
@@ -169,23 +223,23 @@ export default function TriageApp() {
   const progress = `${(currentStep / totalSteps) * 100}%`;
 
   return (
-    <main className="px-4 py-5">
-      <div className="rounded-3xl bg-white/90 p-4 shadow-sm">
-        <div className="flex gap-2 rounded-full bg-slate-100 p-1">
+    <main className="px-3 py-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+        <div className="flex gap-1.5">
           <button
             type="button"
             onClick={() => setActiveTab("triage")}
-            className={`flex-1 rounded-full px-4 py-3 text-sm font-semibold transition ${
-              activeTab === "triage" ? "bg-sky-900 text-white" : "text-slate-600"
+            className={`flex-1 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+              activeTab === "triage" ? "bg-[#1B3A5C] text-white shadow-sm" : "text-slate-500 hover:bg-slate-100"
             }`}
           >
-            Triage
+            Formulario Paciente
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("agent")}
-            className={`flex-1 rounded-full px-4 py-3 text-sm font-semibold transition ${
-              activeTab === "agent" ? "bg-sky-900 text-white" : "text-slate-600"
+            className={`flex-1 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+              activeTab === "agent" ? "bg-[#1B3A5C] text-white shadow-sm" : "text-slate-500 hover:bg-slate-100"
             }`}
           >
             Panel Médico
@@ -195,38 +249,53 @@ export default function TriageApp() {
 
       {activeTab === "agent" ? (
         <div className="mt-5">
-          <AgentPanel tickets={tickets} onConfirm={handleConfirm} onReclassify={handleReclassify} />
+          <AgentPanel
+            tickets={tickets}
+            onClearTickets={clearTickets}
+            onConfirm={handleConfirm}
+            onReclassify={handleReclassify}
+          />
         </div>
       ) : currentTicket ? (
         <div className="mt-5">
-          <TicketResult ticket={currentTicket} onReset={resetFlow} />
+          <TicketResult ticket={currentTicket} onReset={resetPatientFlow} />
         </div>
       ) : (
-        <form onSubmit={onSubmit} className="mt-5 space-y-5">
-          <header className="rounded-3xl bg-slate-900 px-5 py-6 text-white ticket-shadow">
-            <p className="text-sm uppercase tracking-widest text-slate-300">Triage médico</p>
-            <h1 className="mt-2 text-3xl font-semibold">Clasificación visual de pacientes</h1>
-            <p className="mt-3 text-sm text-slate-300">
-              Flujo mobile-first de seis pasos para orientar la prioridad de atención.
+        <form onSubmit={onSubmit} className="mt-4 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-slate-900">Tu evaluación</p>
+            <button
+              type="button"
+              onClick={resetPatientFlow}
+              className="rounded-full border border-red-300 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50"
+            >
+              Reiniciar
+            </button>
+          </div>
+
+          <header className="rounded-2xl bg-gradient-to-br from-[#1B3A5C] to-blue-600 px-5 py-4 text-white ticket-shadow">
+            <h1 className="text-base font-semibold">Bienvenido - Cuéntanos cómo te sientes</h1>
+            <p className="mt-1 text-xs text-white/75">
+              Responde con calma. Un médico revisará tu información.
             </p>
 
-            <div className="mt-5">
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-white/65">
                 <span>Progreso</span>
                 <span>
                   Paso {currentStep} / {totalSteps}
                 </span>
               </div>
-              <div className="mt-2 h-2 rounded-full bg-white/15">
+              <div className="mt-2 h-1 rounded-full bg-white/25">
                 <div
-                  className="h-2 rounded-full bg-amber-400 transition-all duration-300"
+                  className="h-1 rounded-full bg-white transition-all duration-300"
                   style={{ width: progress }}
                 />
               </div>
             </div>
           </header>
 
-          <div className="rounded-3xl bg-white p-5 ticket-shadow">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 ticket-shadow">
             {currentStep === 1 ? (
               <Step1Category
                 value={values.categoria}
@@ -236,25 +305,19 @@ export default function TriageApp() {
             ) : null}
 
             {currentStep === 2 ? (
+              <Step2Specialty
+                value={values.especialidad}
+                error={errors.especialidad?.message}
+                onSelect={handleSpecialtySelect}
+              />
+            ) : null}
+
+            {currentStep === 3 ? (
               <Step2Impact
                 tiempo={values.tiempo}
                 pain={values.pain}
                 onTimeChange={(value) => setValue("tiempo", value)}
                 onPainChange={(value) => setValue("pain", value)}
-              />
-            ) : null}
-
-            {currentStep === 3 ? (
-              <Step3Metrics
-                metrics={values.vitals}
-                errors={{
-                  fc: errors.vitals?.fc?.message,
-                  pa: errors.vitals?.pa?.message,
-                  fr: errors.vitals?.fr?.message,
-                  temp: errors.vitals?.temp?.message,
-                  sat: errors.vitals?.sat?.message,
-                }}
-                onChange={(key, value) => setValue(`vitals.${key}`, value)}
               />
             ) : null}
 
@@ -268,17 +331,29 @@ export default function TriageApp() {
 
             {currentStep === 5 ? (
               <Step5Alarms
+                specialty={values.especialidad}
                 value={values.alarmas}
-                onToggle={(key) => setValue(`alarmas.${key}`, !values.alarmas[key])}
+                onToggle={toggleAlarm}
               />
             ) : null}
 
             {currentStep === 6 ? (
+              <Step3Metrics
+                metrics={values.vitals}
+                errors={{
+                  fc: errors.vitals?.fc?.message,
+                  pa: errors.vitals?.pa?.message,
+                  temp: errors.vitals?.temp?.message,
+                  sat: errors.vitals?.sat?.message,
+                }}
+                onChange={handleVitalChange}
+              />
+            ) : null}
+
+            {currentStep === 7 ? (
               <Step6Context
                 antecedentes={values.antecedentes}
-                onToggleBackground={(value) =>
-                  setValue("antecedentes", toggleArrayValue(values.antecedentes, value))
-                }
+                onToggleBackground={toggleBackground}
               />
             ) : null}
           </div>
@@ -288,7 +363,7 @@ export default function TriageApp() {
               type="button"
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 disabled:opacity-50"
+              className="flex-1 rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
             >
               Atrás
             </button>
@@ -296,14 +371,14 @@ export default function TriageApp() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex-1 rounded-lg bg-sky-900 px-4 py-3 text-sm font-semibold text-white"
+                className="flex-1 rounded-full bg-[#1B3A5C] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#152E4A]"
               >
                 Siguiente
               </button>
             ) : (
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-sky-900 px-4 py-3 text-sm font-semibold text-white"
+                className="flex-1 rounded-full bg-[#1B3A5C] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#152E4A]"
               >
                 Enviar al médico
               </button>

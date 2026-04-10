@@ -1,3 +1,4 @@
+import { getAlarmStats } from "./alarms";
 import type { Classification, TriageData, Vitals } from "./types";
 
 const metricChecks = [
@@ -42,46 +43,40 @@ export function checkBadMetrics(vitals: Vitals): boolean {
 }
 
 export function classify(data: TriageData): Classification {
-  const alarms = Object.values(data.alarmas).filter(Boolean).length;
+  const { alarmCount, criticalCount } = getAlarmStats(data.alarmas, data.especialidad);
   const badV =
     (data.vitals.fc && (data.vitals.fc > 130 || data.vitals.fc < 45)) ||
     (data.vitals.pa && (data.vitals.pa < 85 || data.vitals.pa > 185)) ||
     (data.vitals.sat && data.vitals.sat < 92) ||
     (data.vitals.temp && (data.vitals.temp > 40 || data.vitals.temp < 35));
 
-  if (data.estado === "inconsciente" || data.alarmas.sangrado || data.alarmas.paralisis || badV) {
+  if (data.estado === "inconsciente" || criticalCount >= 2 || badV) {
     return {
       level: "NIVEL 1",
       cat: "Emergencia absoluta",
-      color: "#C0392B",
+      color: "#DC2626",
       time: "Inmediato",
-      msg: "Caso crítico - atención inmediata.",
+      msg: "Caso crítico - atención inmediata necesaria.",
     };
   }
 
-  if (
-    data.estado === "confuso" ||
-    data.pain >= 8 ||
-    alarms >= 2 ||
-    data.alarmas.respiracion ||
-    data.alarmas.vomito_sangre
-  ) {
+  if (data.estado === "somnoliento" || criticalCount >= 1 || data.pain >= 8 || alarmCount >= 2) {
     return {
       level: "NIVEL 2",
       cat: "Emergencia",
-      color: "#E67E22",
+      color: "#D97706",
       time: "< 15 min",
       msg: "Caso urgente - no debe esperar.",
     };
   }
 
-  if (data.pain >= 5 || alarms >= 1 || data.tiempo === "lt1h") {
+  if (data.pain >= 5 || alarmCount >= 1 || data.tiempo === "lt1h") {
     return {
       level: "NIVEL 3",
       cat: "Urgencia alta",
-      color: "#D4AC0D",
+      color: "#B45309",
       time: "< 60 min",
-      msg: "Urgencia moderada.",
+      msg: "Urgencia moderada - prioridad de atención.",
     };
   }
 
@@ -89,7 +84,7 @@ export function classify(data: TriageData): Classification {
     return {
       level: "NIVEL 4",
       cat: "Urgencia baja",
-      color: "#27AE60",
+      color: "#16A34A",
       time: "1-2 horas",
       msg: "Puede esperar con vigilancia.",
     };
@@ -98,7 +93,7 @@ export function classify(data: TriageData): Classification {
   return {
     level: "NIVEL 5",
     cat: "No urgente",
-    color: "#2980B9",
+    color: "#0284C7",
     time: "Puede esperar",
     msg: "No requiere atención urgente.",
   };

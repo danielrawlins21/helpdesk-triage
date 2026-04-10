@@ -7,8 +7,9 @@ const backgroundOptions: Array<{ value: BackgroundType; label: string }> = [
   { value: "hipertension", label: "Hipertensión" },
   { value: "asma", label: "Asma / respiratorios" },
   { value: "cancer", label: "Cáncer / quimioterapia" },
-  { value: "ninguna", label: "Ninguna" },
-  { value: "otra", label: "Otra condición" },
+  { value: "renal", label: "Enfermedad del riñón" },
+  { value: "anticoag", label: "Tomo anticoagulantes" },
+  { value: "ninguna", label: "Ninguna de las anteriores" },
 ];
 
 interface Step6ContextProps {
@@ -26,7 +27,7 @@ function SelectGrid({
   onToggle: (value: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-2">
       {options.map((option) => {
         const selected = selectedValues.includes(option.value);
         return (
@@ -34,10 +35,10 @@ function SelectGrid({
             key={option.value}
             type="button"
             onClick={() => onToggle(option.value)}
-            className={`rounded-lg border px-4 py-3 text-left text-sm transition ${
+            className={`rounded-xl border px-3 py-3 text-center text-xs font-semibold transition ${
               selected
-                ? "border-slate-900 bg-sky-900 text-white"
-                : "border-slate-300 bg-white text-slate-700"
+                ? "border-[#1B3A5C] bg-[#1B3A5C] text-white shadow-sm"
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-500 hover:bg-blue-50"
             }`}
           >
             {option.label}
@@ -53,14 +54,21 @@ export function Step6Context({
   onToggleBackground,
 }: Step6ContextProps) {
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 6</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Antecedentes</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Paso 7 de 7</p>
+        <h2 className="mt-1 text-base font-semibold leading-snug text-slate-900">
+          ¿Tienes alguna de estas condiciones de salud?
+        </h2>
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-medium text-slate-700">¿Tienes alguna de estas condiciones de salud?</p>
+        <p className="text-sm font-medium text-slate-700">
+          Puedes marcar varias. Ayuda al médico a evaluar mejor tu caso.
+        </p>
+        <p className="rounded-xl bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">
+          Si marcas "Ninguna", se desmarcan las demás condiciones.
+        </p>
         <SelectGrid
           selectedValues={antecedentes}
           options={backgroundOptions}

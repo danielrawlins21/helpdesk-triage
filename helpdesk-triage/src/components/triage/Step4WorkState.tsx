@@ -5,12 +5,25 @@ const options: Array<{
   label: string;
   tone: string;
 }> = [
-  { value: "orientado", label: "Me siento consciente y orientado", tone: "bg-emerald-600 text-white" },
-  { value: "confuso", label: "Estoy confundido o desorientado", tone: "bg-amber-500 text-white" },
+  {
+    value: "orientado",
+    label: "Estoy bien despierto, sé dónde estoy y puedo responder",
+    tone: "border-emerald-300 bg-emerald-50 text-emerald-800",
+  },
+  {
+    value: "confuso",
+    label: "Estoy confundido, desorientado o con la mente lenta",
+    tone: "border-amber-300 bg-amber-50 text-amber-800",
+  },
+  {
+    value: "somnoliento",
+    label: "Estoy muy dormido/a, es difícil despertarme",
+    tone: "border-orange-300 bg-orange-50 text-orange-800",
+  },
   {
     value: "inconsciente",
-    label: "Alguien me ayuda porque no puedo responder solo",
-    tone: "bg-red-700 text-white",
+    label: "No responde o está inconsciente - alguien lo/la ayuda",
+    tone: "border-red-300 bg-red-50 text-red-800",
   },
 ];
 
@@ -24,21 +37,26 @@ export function Step4WorkState({ value, error, onSelect }: Step4WorkStateProps) 
   return (
     <section className="space-y-5">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 4</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">¿Cómo está tu estado mental ahora mismo?</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Paso 4 de 7</p>
+        <h2 className="mt-1 text-base font-semibold text-slate-900">
+          ¿Cómo está el estado mental en este momento?
+        </h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Si el paciente no puede responder, que lo haga un acompañante.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {options.map((option, index) => {
+      <div className="space-y-2">
+        {options.map((option) => {
           const selected = value === option.value;
           return (
             <button
               key={option.value}
               type="button"
-              onClick={() => onSelect(option.value)}
-              className={`rounded-lg border px-4 py-4 text-left text-sm font-medium transition ${
-                index === 2 ? "col-span-2" : ""
-              } ${selected ? option.tone + " border-transparent" : "border-slate-300 bg-white text-slate-700"}`}
+                onClick={() => onSelect(option.value)}
+              className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
+                selected ? option.tone + " shadow-sm" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-500 hover:bg-blue-50"
+              }`}
             >
               {option.label}
             </button>
@@ -46,7 +64,7 @@ export function Step4WorkState({ value, error, onSelect }: Step4WorkStateProps) 
         })}
       </div>
 
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
     </section>
   );
 }

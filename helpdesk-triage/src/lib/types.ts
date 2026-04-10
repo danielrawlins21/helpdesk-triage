@@ -9,7 +9,8 @@ export type IncidentCategory =
   | "mareo"
   | "otro";
 export type IncidentTime = "lt1h" | "1_24h" | "gt24h";
-export type WorkState = "orientado" | "confuso" | "inconsciente";
+export type Specialty = "pediatria" | "ginecologia" | "cirugia" | "interna";
+export type WorkState = "orientado" | "confuso" | "somnoliento" | "inconsciente";
 export type BackgroundType =
   | "diabetes"
   | "corazon"
@@ -17,6 +18,8 @@ export type BackgroundType =
   | "hipertension"
   | "asma"
   | "cancer"
+  | "renal"
+  | "anticoag"
   | "ninguna"
   | "otra";
 
@@ -28,17 +31,11 @@ export interface Vitals {
   sat?: number;
 }
 
-export interface Alarms {
-  dolor_fuerte: boolean;
-  respiracion: boolean;
-  sangrado: boolean;
-  desmayo: boolean;
-  vomito_sangre: boolean;
-  paralisis: boolean;
-}
+export type Alarms = Record<string, boolean>;
 
 export interface TriageData {
   categoria: IncidentCategory | "";
+  especialidad: Specialty | "";
   tiempo: IncidentTime | "";
   pain: number;
   vitals: Vitals;
@@ -66,17 +63,11 @@ export interface TicketRecord {
 
 export const defaultTriageData: TriageData = {
   categoria: "",
+  especialidad: "",
   tiempo: "",
-  pain: 0,
+  pain: 6,
   vitals: {},
   estado: "",
-  alarmas: {
-    dolor_fuerte: false,
-    respiracion: false,
-    sangrado: false,
-    desmayo: false,
-    vomito_sangre: false,
-    paralisis: false,
-  },
+  alarmas: {},
   antecedentes: [],
 };

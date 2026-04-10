@@ -6,6 +6,8 @@ const timeOptions: Array<{ value: IncidentTime; label: string }> = [
   { value: "gt24h", label: "Más de 24 horas" },
 ];
 
+const painOptions = Array.from({ length: 11 }, (_, value) => value);
+
 interface Step2ImpactProps {
   tiempo: IncidentTime | "";
   pain: number;
@@ -20,14 +22,14 @@ export function Step2Impact({
   onPainChange,
 }: Step2ImpactProps) {
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 2</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Tiempo y dolor</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Paso 3 de 7</p>
+        <h2 className="mt-1 text-base font-semibold text-slate-900">Tiempo y dolor</h2>
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-medium text-slate-700">¿Hace cuánto tiempo tienes esta molestia?</p>
+        <p className="text-sm font-medium text-slate-700">¿Hace cuánto empezó este malestar?</p>
         <div className="grid grid-cols-3 gap-2">
           {timeOptions.map((option) => {
             const selected = tiempo === option.value;
@@ -36,10 +38,10 @@ export function Step2Impact({
                 key={option.value}
                 type="button"
                 onClick={() => onTimeChange(option.value)}
-                className={`w-full rounded-lg border px-3 py-3 text-center text-sm transition ${
+                className={`w-full rounded-xl border px-2 py-3 text-center text-xs font-semibold transition ${
                   selected
-                    ? "border-slate-900 bg-sky-900 text-white"
-                    : "border-slate-300 bg-white text-slate-700"
+                    ? "border-[#1B3A5C] bg-[#1B3A5C] text-white shadow-sm"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-500 hover:bg-blue-50"
                 }`}
               >
                 {option.label}
@@ -50,25 +52,36 @@ export function Step2Impact({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-end justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-slate-700">¿Cómo describes el dolor?</p>
+            <p className="text-sm font-medium text-slate-700">¿Cuánto molesta el dolor?</p>
             <p className="mt-1 text-xs text-slate-500">
-              Escala de dolor (0 = sin dolor · 10 = insoportable)
+              0 = sin dolor · 10 = el peor dolor imaginable
             </p>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+          <span className="rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-700">
             {pain}/10
           </span>
         </div>
-        <input
-          type="range"
-          min="0"
-          max="10"
-          value={pain}
-          onChange={(event) => onPainChange(Number(event.target.value))}
-          className="w-full accent-sky-900"
-        />
+        <div className="flex flex-wrap gap-1.5 rounded-2xl bg-slate-50 p-2">
+          {painOptions.map((option) => {
+            const selected = pain === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onPainChange(option)}
+                className={`h-8 w-8 rounded-full border text-xs font-semibold transition ${
+                  selected
+                    ? "border-red-600 bg-red-600 text-white shadow-sm"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-red-300 hover:bg-red-50"
+                }`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
         <div className="flex items-center justify-between text-xs text-slate-600">
           <span>Sin dolor</span>
           <span>Moderado</span>

@@ -4,11 +4,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "check": "astro check"
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "dev:chat": "node scripts/dev-with-chat.mjs",
+    "start": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "chat:proxy": "node scripts/ollama-proxy.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",

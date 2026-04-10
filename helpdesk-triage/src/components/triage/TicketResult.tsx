@@ -1,5 +1,6 @@
 import type { TicketRecord } from "../../lib/types";
 import { WaitChat } from "./WaitChat";
+import { TicketQrCode } from "./TicketQrCode";
 
 interface TicketResultProps {
   ticket: TicketRecord;
@@ -54,6 +55,8 @@ export function TicketResult({ ticket, onReset }: TicketResultProps) {
           Nuevo paciente - Reiniciar formulario
         </button>
       </div>
+
+      <TicketQrCode ticket={ticket} />
 
       <WaitChat ticket={ticket} />
     </section>

@@ -59,6 +59,17 @@ export interface TicketRecord {
   data: TriageData;
   classification: Classification;
   confirmed: boolean;
+  sourceKey?: string;
+}
+
+export const QR_TRIAGE_VERSION = "triage-v1" as const;
+
+export interface QrTriagePayload {
+  version: typeof QR_TRIAGE_VERSION;
+  issuedAt: string;
+  ticketNumber: string;
+  data: TriageData;
+  classification: Classification;
 }
 
 export const defaultTriageData: TriageData = {

@@ -1,4 +1,5 @@
 import { TicketCard } from "./TicketCard";
+import { QrScannerPanel } from "./QrScannerPanel";
 import type { TicketLevel, TicketRecord } from "../../lib/types";
 
 interface AgentPanelProps {
@@ -6,9 +7,16 @@ interface AgentPanelProps {
   onClearTickets: () => void;
   onConfirm: (id: string) => void;
   onReclassify: (id: string, level: TicketLevel) => void;
+  onImportTicket: (ticket: TicketRecord) => boolean;
 }
 
-export function AgentPanel({ tickets, onClearTickets, onConfirm, onReclassify }: AgentPanelProps) {
+export function AgentPanel({
+  tickets,
+  onClearTickets,
+  onConfirm,
+  onReclassify,
+  onImportTicket,
+}: AgentPanelProps) {
   const pending = tickets.filter((ticket) => !ticket.confirmed).length;
 
   return (
@@ -17,7 +25,7 @@ export function AgentPanel({ tickets, onClearTickets, onConfirm, onReclassify }:
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">Panel médico</h2>
-            <p className="mt-1 text-xs text-white/70">Casos enviados por pacientes</p>
+            <p className="mt-1 text-xs text-white/70">Casos importados desde el QR del paciente</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold">{pending} pendientes</span>
@@ -32,10 +40,12 @@ export function AgentPanel({ tickets, onClearTickets, onConfirm, onReclassify }:
         </div>
       </header>
 
+      <QrScannerPanel onImportTicket={onImportTicket} />
+
       {tickets.length === 0 ? (
         <div className="rounded-3xl bg-white px-6 py-12 text-center text-sm text-slate-600 ring-1 ring-slate-200/80 ticket-shadow">
           <p className="mt-3 font-medium text-slate-700">No hay casos pendientes aún.</p>
-          <p className="mt-1 text-xs text-slate-500">Completa el formulario del paciente para ver casos aquí.</p>
+          <p className="mt-1 text-xs text-slate-500">Escanea el QR del paciente para cargar el caso en este panel.</p>
         </div>
       ) : (
         <div className="space-y-4">

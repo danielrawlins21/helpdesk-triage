@@ -12,6 +12,7 @@ import { Step5Alarms } from "./triage/Step5Alarms";
 import { Step6Context } from "./triage/Step6Context";
 import { TicketResult } from "./triage/TicketResult";
 import { classify } from "../lib/classify";
+import { createLocalTicketId, createTicketNumber, getQrSourceKey } from "../lib/qrPayload";
 import {
   defaultTriageData,
   type BackgroundType,
@@ -79,14 +80,6 @@ const reclassifiedLevels: Record<TicketLevel, Classification> = {
   },
 };
 
-function makeTicketNumber() {
-  return String(Math.floor(Math.random() * 900) + 100);
-}
-
-function makeTicketId() {
-  return `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-}
-
 function toggleArrayValue<T extends string>(list: T[], value: T) {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
@@ -95,7 +88,7 @@ export default function TriageApp() {
   const [activeTab, setActiveTab] = useState<"triage" | "agent">("triage");
   const [currentStep, setCurrentStep] = useState(1);
   const [tickets, setTickets] = useState<TicketRecord[]>([]);
-  const [currentTicketId, setCurrentTicketId] = useState<string | null>(null);
+  const [currentTicket, setCurrentTicket] = useState<TicketRecord | null>(null);
 
   const {
     watch,
@@ -111,7 +104,6 @@ export default function TriageApp() {
   });
 
   const values = watch();
-  const currentTicket = tickets.find((ticket) => ticket.id === currentTicketId) ?? null;
 
   function handleVitalChange<K extends keyof TriageData["vitals"]>(
     key: K,
@@ -153,13 +145,12 @@ export default function TriageApp() {
   function resetPatientFlow() {
     reset(defaultTriageData);
     setCurrentStep(1);
-    setCurrentTicketId(null);
+    setCurrentTicket(null);
     setActiveTab("triage");
   }
 
   function clearTickets() {
     setTickets([]);
-    setCurrentTicketId(null);
   }
 
   function handleSpecialtySelect(value: Specialty) {
@@ -190,7 +181,40 @@ export default function TriageApp() {
   }
 
   function updateTicket(id: string, updater: (ticket: TicketRecord) => TicketRecord) {
-    setTickets((current) => current.map((ticket) => (ticket.id === id ? updater(ticket) : ticket)));
+    let updatedTicket: TicketRecord | null = null;
+
+    setTickets((current) =>
+      current.map((ticket) => {
+        if (ticket.id !== id) return ticket;
+        const nextTicket = updater(ticket);
+        updatedTicket = nextTicket;
+        return nextTicket;
+      }),
+    );
+
+    if (updatedTicket?.sourceKey) {
+      setCurrentTicket((currentPatientTicket) =>
+        currentPatientTicket?.sourceKey === updatedTicket?.sourceKey ? updatedTicket : currentPatientTicket,
+      );
+    }
+  }
+
+  function appendTicket(ticket: TicketRecord) {
+    let added = false;
+
+    setTickets((current) => {
+      const isDuplicate =
+        ticket.sourceKey && current.some((existingTicket) => existingTicket.sourceKey === ticket.sourceKey);
+
+      if (isDuplicate) {
+        return current;
+      }
+
+      added = true;
+      return [ticket, ...current];
+    });
+
+    return added;
   }
 
   function handleConfirm(id: string) {
@@ -206,17 +230,22 @@ export default function TriageApp() {
   }
 
   const onSubmit = handleSubmit((data) => {
+    const createdAt = new Date().toISOString();
+    const number = createTicketNumber();
     const ticket: TicketRecord = {
-      id: makeTicketId(),
-      number: makeTicketNumber(),
-      createdAt: new Date().toISOString(),
+      id: createLocalTicketId(),
+      number,
+      createdAt,
       data,
       classification: classify(data),
       confirmed: false,
+      sourceKey: getQrSourceKey({
+        ticketNumber: number,
+        issuedAt: createdAt,
+      }),
     };
 
-    setTickets((current) => [ticket, ...current]);
-    setCurrentTicketId(ticket.id);
+    setCurrentTicket(ticket);
     setActiveTab("triage");
   });
 
@@ -254,6 +283,7 @@ export default function TriageApp() {
             onClearTickets={clearTickets}
             onConfirm={handleConfirm}
             onReclassify={handleReclassify}
+            onImportTicket={appendTicket}
           />
         </div>
       ) : currentTicket ? (

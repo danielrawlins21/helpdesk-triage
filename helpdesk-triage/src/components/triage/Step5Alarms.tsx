@@ -1,12 +1,12 @@
 import type { Alarms } from "../../lib/types";
 
 const alarmOptions: Array<{ key: keyof Alarms; label: string }> = [
-  { key: "datos_en_riesgo", label: "Hay datos en riesgo o posible pérdida de información" },
-  { key: "produccion_caida", label: "El servicio está caído en producción" },
-  { key: "muchos_usuarios", label: "Más de 10 usuarios están afectados" },
-  { key: "cliente_vip", label: "Es un cliente VIP o contrato crítico" },
-  { key: "mas_24h", label: "El problema lleva más de 24h sin resolverse" },
-  { key: "seguridad", label: "Hay riesgo de seguridad o acceso no autorizado" },
+  { key: "dolor_fuerte", label: "Dolor muy fuerte que no me deja hacer nada" },
+  { key: "respiracion", label: "Me cuesta mucho respirar o siento que me ahogo" },
+  { key: "sangrado", label: "Tengo sangrado activo abundante" },
+  { key: "desmayo", label: "Me desmayé o siento que voy a desmayarme" },
+  { key: "vomito_sangre", label: "Estoy vomitando sangre o heces negras" },
+  { key: "paralisis", label: "Siento un lado del cuerpo paralizado o adormecido" },
 ];
 
 interface Step5AlarmsProps {
@@ -19,10 +19,8 @@ export function Step5Alarms({ value, onToggle }: Step5AlarmsProps) {
     <section className="space-y-5">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 5</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">
-          ¿Alguna de estas situaciones aplica?
-        </h2>
-        <p className="mt-2 text-sm text-slate-600">Marca todas las que apliquen.</p>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-900">¿Tienes alguno de estos síntomas de alarma?</h2>
+        <p className="mt-2 text-sm text-slate-600">Marca todos los que apliquen ahora mismo.</p>
       </div>
 
       <div className="space-y-3">

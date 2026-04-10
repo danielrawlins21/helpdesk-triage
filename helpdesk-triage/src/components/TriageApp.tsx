@@ -16,56 +16,63 @@ import { defaultTriageData, type Classification, type TicketLevel, type TicketRe
 const triageSchema = z.object({
   categoria: z.string().min(1, "Selecciona una categoría para continuar."),
   tiempo: z.string().optional(),
-  impact: z.number().min(0).max(10),
-  metrics: z.object({
-    usuariosAfectados: z.number().min(0).max(100000).optional(),
-    disponibilidad: z.number().min(0).max(100).optional(),
-    respuestaMs: z.number().min(0).max(120000).optional(),
-    erroresPorMinuto: z.number().min(0).max(100000).optional(),
+  pain: z.number().min(0).max(10),
+  vitals: z.object({
+    fc: z.number().min(0).max(250).optional(),
+    pa: z.number().min(0).max(300).optional(),
+    fr: z.number().min(0).max(80).optional(),
+    temp: z.number().min(0).max(45).optional(),
+    sat: z.number().min(0).max(100).optional(),
   }),
-  estado: z.string().min(1, "Selecciona tu estado operativo actual."),
+  estado: z.string().min(1, "Selecciona tu estado mental actual."),
   alarmas: z.object({
-    datos_en_riesgo: z.boolean(),
-    produccion_caida: z.boolean(),
-    muchos_usuarios: z.boolean(),
-    cliente_vip: z.boolean(),
-    mas_24h: z.boolean(),
-    seguridad: z.boolean(),
+    dolor_fuerte: z.boolean(),
+    respiracion: z.boolean(),
+    sangrado: z.boolean(),
+    desmayo: z.boolean(),
+    vomito_sangre: z.boolean(),
+    paralisis: z.boolean(),
   }),
-  entornos: z.array(z.string()),
   antecedentes: z.array(z.string()),
 });
 
 const totalSteps = 6;
 
 const reclassifiedLevels: Record<TicketLevel, Classification> = {
-  P1: {
-    level: "P1",
-    cat: "Crítico",
+  "NIVEL 1": {
+    level: "NIVEL 1",
+    cat: "Emergencia absoluta",
     color: "#C0392B",
     time: "Inmediato",
-    msg: "Reclasificado por agente para atención inmediata.",
+    msg: "Reclasificado por médico para atención inmediata.",
   },
-  P2: {
-    level: "P2",
-    cat: "Alto",
+  "NIVEL 2": {
+    level: "NIVEL 2",
+    cat: "Emergencia",
     color: "#E67E22",
     time: "< 15 min",
-    msg: "Reclasificado por agente como incidente urgente.",
+    msg: "Reclasificado por médico como caso urgente.",
   },
-  P3: {
-    level: "P3",
-    cat: "Medio",
+  "NIVEL 3": {
+    level: "NIVEL 3",
+    cat: "Urgencia alta",
     color: "#D4AC0D",
     time: "< 60 min",
-    msg: "Reclasificado por agente con prioridad media.",
+    msg: "Reclasificado por médico con urgencia alta.",
   },
-  P4: {
-    level: "P4",
-    cat: "Bajo",
+  "NIVEL 4": {
+    level: "NIVEL 4",
+    cat: "Urgencia baja",
     color: "#27AE60",
-    time: "2-4 horas",
-    msg: "Reclasificado por agente para seguimiento planificado.",
+    time: "1-2 horas",
+    msg: "Reclasificado por médico para vigilancia.",
+  },
+  "NIVEL 5": {
+    level: "NIVEL 5",
+    cat: "No urgente",
+    color: "#2980B9",
+    time: "Puede esperar",
+    msg: "Reclasificado por médico como no urgente.",
   },
 };
 
@@ -181,7 +188,7 @@ export default function TriageApp() {
               activeTab === "agent" ? "bg-sky-900 text-white" : "text-slate-600"
             }`}
           >
-            Panel del Agente
+            Panel Médico
           </button>
         </div>
       </div>
@@ -197,10 +204,10 @@ export default function TriageApp() {
       ) : (
         <form onSubmit={onSubmit} className="mt-5 space-y-5">
           <header className="rounded-3xl bg-slate-900 px-5 py-6 text-white ticket-shadow">
-            <p className="text-sm uppercase tracking-widest text-slate-300">Helpdesk triage</p>
-            <h1 className="mt-2 text-3xl font-semibold">Clasificación visual de incidentes</h1>
+            <p className="text-sm uppercase tracking-widest text-slate-300">Triage médico</p>
+            <h1 className="mt-2 text-3xl font-semibold">Clasificación visual de pacientes</h1>
             <p className="mt-3 text-sm text-slate-300">
-              Flujo mobile-first de seis pasos para priorizar tickets de soporte técnico.
+              Flujo mobile-first de seis pasos para orientar la prioridad de atención.
             </p>
 
             <div className="mt-5">
@@ -231,22 +238,23 @@ export default function TriageApp() {
             {currentStep === 2 ? (
               <Step2Impact
                 tiempo={values.tiempo}
-                impact={values.impact}
+                pain={values.pain}
                 onTimeChange={(value) => setValue("tiempo", value)}
-                onImpactChange={(value) => setValue("impact", value)}
+                onPainChange={(value) => setValue("pain", value)}
               />
             ) : null}
 
             {currentStep === 3 ? (
               <Step3Metrics
-                metrics={values.metrics}
+                metrics={values.vitals}
                 errors={{
-                  usuariosAfectados: errors.metrics?.usuariosAfectados?.message,
-                  disponibilidad: errors.metrics?.disponibilidad?.message,
-                  respuestaMs: errors.metrics?.respuestaMs?.message,
-                  erroresPorMinuto: errors.metrics?.erroresPorMinuto?.message,
+                  fc: errors.vitals?.fc?.message,
+                  pa: errors.vitals?.pa?.message,
+                  fr: errors.vitals?.fr?.message,
+                  temp: errors.vitals?.temp?.message,
+                  sat: errors.vitals?.sat?.message,
                 }}
-                onChange={(key, value) => setValue(`metrics.${key}`, value)}
+                onChange={(key, value) => setValue(`vitals.${key}`, value)}
               />
             ) : null}
 
@@ -267,9 +275,7 @@ export default function TriageApp() {
 
             {currentStep === 6 ? (
               <Step6Context
-                entornos={values.entornos}
                 antecedentes={values.antecedentes}
-                onToggleEnv={(value) => setValue("entornos", toggleArrayValue(values.entornos, value))}
                 onToggleBackground={(value) =>
                   setValue("antecedentes", toggleArrayValue(values.antecedentes, value))
                 }
@@ -299,7 +305,7 @@ export default function TriageApp() {
                 type="submit"
                 className="flex-1 rounded-lg bg-sky-900 px-4 py-3 text-sm font-semibold text-white"
               >
-                Enviar al equipo de soporte
+                Enviar al médico
               </button>
             )}
           </div>

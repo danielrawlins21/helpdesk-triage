@@ -5,11 +5,11 @@ const options: Array<{
   label: string;
   tone: string;
 }> = [
-  { value: "operativo", label: "Puedo trabajar con dificultades", tone: "bg-emerald-600 text-white" },
-  { value: "parcial", label: "Estoy parcialmente bloqueado", tone: "bg-amber-500 text-white" },
+  { value: "orientado", label: "Me siento consciente y orientado", tone: "bg-emerald-600 text-white" },
+  { value: "confuso", label: "Estoy confundido o desorientado", tone: "bg-amber-500 text-white" },
   {
-    value: "bloqueado",
-    label: "Estoy completamente detenido / no puedo trabajar",
+    value: "inconsciente",
+    label: "Alguien me ayuda porque no puedo responder solo",
     tone: "bg-red-700 text-white",
   },
 ];
@@ -25,9 +25,7 @@ export function Step4WorkState({ value, error, onSelect }: Step4WorkStateProps) 
     <section className="space-y-5">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 4</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">
-          ¿Cómo describirías tu situación ahora mismo?
-        </h2>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-900">¿Cómo está tu estado mental ahora mismo?</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

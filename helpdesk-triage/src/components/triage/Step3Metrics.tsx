@@ -1,14 +1,14 @@
 import { getBadMetricLabels } from "../../lib/classify";
-import type { Metrics } from "../../lib/types";
+import type { Vitals } from "../../lib/types";
 
 interface Step3MetricsProps {
-  metrics: Metrics;
-  errors: Partial<Record<keyof Metrics, string>>;
-  onChange: <K extends keyof Metrics>(key: K, value: number | undefined) => void;
+  metrics: Vitals;
+  errors: Partial<Record<keyof Vitals, string>>;
+  onChange: <K extends keyof Vitals>(key: K, value: number | undefined) => void;
 }
 
 const fields: Array<{
-  key: keyof Metrics;
+  key: keyof Vitals;
   label: string;
   alertLabel: string;
   hint: string;
@@ -16,36 +16,44 @@ const fields: Array<{
   max: number;
 }> = [
   {
-    key: "usuariosAfectados",
-    label: "Usuarios afectados",
-    alertLabel: "Usuarios afectados",
-    hint: "Ref normal: 1-5",
+    key: "fc",
+    label: "Frecuencia cardiaca (FC)",
+    alertLabel: "FC",
+    hint: "Ref: 60-100 lpm",
     min: 0,
-    max: 100000,
+    max: 250,
   },
   {
-    key: "disponibilidad",
-    label: "% disponibilidad del servicio",
-    alertLabel: "Disponibilidad baja",
-    hint: "Ref normal: 95-100%",
+    key: "pa",
+    label: "Presión arterial (TA)",
+    alertLabel: "TA",
+    hint: "Ref: 90-140 mmHg",
+    min: 0,
+    max: 300,
+  },
+  {
+    key: "fr",
+    label: "Frecuencia respiratoria",
+    alertLabel: "FR",
+    hint: "Ref: 12-20 rpm",
+    min: 0,
+    max: 80,
+  },
+  {
+    key: "temp",
+    label: "Temperatura (°C)",
+    alertLabel: "Temp",
+    hint: "Ref: 36-37.5°C",
+    min: 0,
+    max: 45,
+  },
+  {
+    key: "sat",
+    label: "Saturación O2 (SpO2 %)",
+    alertLabel: "SpO2",
+    hint: "Ref: 94-100%",
     min: 0,
     max: 100,
-  },
-  {
-    key: "respuestaMs",
-    label: "Tiempo de respuesta en ms",
-    alertLabel: "Respuesta lenta",
-    hint: "Ref normal: < 500ms",
-    min: 0,
-    max: 120000,
-  },
-  {
-    key: "erroresPorMinuto",
-    label: "Errores por minuto",
-    alertLabel: "Errores elevados",
-    hint: "Ref normal: 0-5",
-    min: 0,
-    max: 100000,
   },
 ];
 
@@ -57,19 +65,19 @@ export function Step3Metrics({ metrics, errors, onChange }: Step3MetricsProps) {
     <section className="space-y-5">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 3</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Métricas del sistema</h2>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Signos vitales</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Si tienes datos, ingresa los siguientes valores. Son opcionales.
+          Si tienes un aparato, ingresa los valores. Si no los sabes, déjalos en blanco.
         </p>
       </div>
 
       {alerts.length > 0 ? (
         <div className="rounded-xl border border-red-700 bg-red-100 px-4 py-3 text-sm text-red-800">
-          Alerta: hay métricas fuera del rango de referencia.
+          Valor fuera de rango normal detectado
         </div>
       ) : null}
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
         {fields.map((field) => {
           const value = metrics[field.key];
           const isAlert = alertSet.has(field.alertLabel);

@@ -9,7 +9,7 @@ export function TicketResult({ ticket, onReset }: TicketResultProps) {
   return (
     <section className="space-y-5">
       <div className="rounded-3xl bg-slate-900 px-6 py-7 text-white ticket-shadow">
-        <p className="text-sm uppercase tracking-widest text-slate-300">Ticket generado</p>
+        <p className="text-sm uppercase tracking-widest text-slate-300">Tu número de ticket</p>
         <h2 className="mt-2 text-4xl font-semibold">#{ticket.number}</h2>
         <div className="mt-5 flex items-center gap-3">
           <span
@@ -22,7 +22,9 @@ export function TicketResult({ ticket, onReset }: TicketResultProps) {
             {ticket.classification.time}
           </span>
         </div>
-        <p className="mt-5 text-sm text-slate-200">{ticket.classification.msg}</p>
+        <p className="mt-5 text-sm text-slate-200">
+          {ticket.classification.msg} Un médico revisará y confirmará tu clasificación.
+        </p>
       </div>
 
       <div className="rounded-2xl bg-white p-5 ticket-shadow">
@@ -35,7 +37,9 @@ export function TicketResult({ ticket, onReset }: TicketResultProps) {
                 : "bg-amber-100 text-amber-800"
             }`}
           >
-            {ticket.confirmed ? "Confirmado" : "Esperando confirmación del agente..."}
+            {ticket.confirmed
+              ? "Clasificación confirmada por el médico"
+              : "Esperando confirmación del médico..."}
           </span>
         </div>
         <button
@@ -43,7 +47,7 @@ export function TicketResult({ ticket, onReset }: TicketResultProps) {
           onClick={onReset}
           className="mt-5 w-full rounded-lg bg-sky-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900"
         >
-          Nuevo ticket - Reiniciar formulario
+          Nuevo paciente - Reiniciar formulario
         </button>
       </div>
     </section>

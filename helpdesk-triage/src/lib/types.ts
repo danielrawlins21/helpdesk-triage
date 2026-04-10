@@ -1,50 +1,49 @@
-export type TicketLevel = "P1" | "P2" | "P3" | "P4";
+export type TicketLevel = "NIVEL 1" | "NIVEL 2" | "NIVEL 3" | "NIVEL 4" | "NIVEL 5";
 export type IncidentCategory =
-  | "red"
-  | "hardware"
-  | "software"
-  | "acceso"
-  | "correo"
-  | "datos"
-  | "servidor"
+  | "pecho"
+  | "respirar"
+  | "fiebre"
+  | "golpe"
+  | "barriga"
+  | "embarazo"
+  | "mareo"
   | "otro";
 export type IncidentTime = "lt1h" | "1_24h" | "gt24h";
-export type WorkState = "operativo" | "parcial" | "bloqueado";
-export type EnvironmentType = "produccion" | "desarrollo" | "staging" | "local";
+export type WorkState = "orientado" | "confuso" | "inconsciente";
 export type BackgroundType =
-  | "configuracion"
-  | "actualizacion"
-  | "incidente_reciente"
-  | "legacy"
-  | "alta_carga"
-  | "mantenimiento"
-  | "ninguno"
-  | "otro";
+  | "diabetes"
+  | "corazon"
+  | "embarazada"
+  | "hipertension"
+  | "asma"
+  | "cancer"
+  | "ninguna"
+  | "otra";
 
-export interface Metrics {
-  usuariosAfectados?: number;
-  disponibilidad?: number;
-  respuestaMs?: number;
-  erroresPorMinuto?: number;
+export interface Vitals {
+  fc?: number;
+  pa?: number;
+  fr?: number;
+  temp?: number;
+  sat?: number;
 }
 
 export interface Alarms {
-  datos_en_riesgo: boolean;
-  produccion_caida: boolean;
-  muchos_usuarios: boolean;
-  cliente_vip: boolean;
-  mas_24h: boolean;
-  seguridad: boolean;
+  dolor_fuerte: boolean;
+  respiracion: boolean;
+  sangrado: boolean;
+  desmayo: boolean;
+  vomito_sangre: boolean;
+  paralisis: boolean;
 }
 
 export interface TriageData {
   categoria: IncidentCategory | "";
   tiempo: IncidentTime | "";
-  impact: number;
-  metrics: Metrics;
+  pain: number;
+  vitals: Vitals;
   estado: WorkState | "";
   alarmas: Alarms;
-  entornos: EnvironmentType[];
   antecedentes: BackgroundType[];
 }
 
@@ -68,17 +67,16 @@ export interface TicketRecord {
 export const defaultTriageData: TriageData = {
   categoria: "",
   tiempo: "",
-  impact: 0,
-  metrics: {},
+  pain: 0,
+  vitals: {},
   estado: "",
   alarmas: {
-    datos_en_riesgo: false,
-    produccion_caida: false,
-    muchos_usuarios: false,
-    cliente_vip: false,
-    mas_24h: false,
-    seguridad: false,
+    dolor_fuerte: false,
+    respiracion: false,
+    sangrado: false,
+    desmayo: false,
+    vomito_sangre: false,
+    paralisis: false,
   },
-  entornos: [],
   antecedentes: [],
 };

@@ -1,27 +1,18 @@
-import type { BackgroundType, EnvironmentType } from "../../lib/types";
-
-const envOptions: Array<{ value: EnvironmentType; label: string }> = [
-  { value: "produccion", label: "Producción" },
-  { value: "desarrollo", label: "Desarrollo" },
-  { value: "staging", label: "Staging" },
-  { value: "local", label: "Local" },
-];
+import type { BackgroundType } from "../../lib/types";
 
 const backgroundOptions: Array<{ value: BackgroundType; label: string }> = [
-  { value: "configuracion", label: "Cambio reciente de configuración" },
-  { value: "actualizacion", label: "Actualización de software" },
-  { value: "incidente_reciente", label: "Incidente anterior reciente" },
-  { value: "legacy", label: "Sistema legacy / antiguo" },
-  { value: "alta_carga", label: "Alta carga de usuarios" },
-  { value: "mantenimiento", label: "Mantenimiento programado" },
-  { value: "ninguno", label: "Ninguno" },
-  { value: "otro", label: "Otro contexto" },
+  { value: "diabetes", label: "Diabetes" },
+  { value: "corazon", label: "Problema del corazón" },
+  { value: "embarazada", label: "Embarazada" },
+  { value: "hipertension", label: "Hipertensión" },
+  { value: "asma", label: "Asma / respiratorios" },
+  { value: "cancer", label: "Cáncer / quimioterapia" },
+  { value: "ninguna", label: "Ninguna" },
+  { value: "otra", label: "Otra condición" },
 ];
 
 interface Step6ContextProps {
-  entornos: EnvironmentType[];
   antecedentes: BackgroundType[];
-  onToggleEnv: (value: EnvironmentType) => void;
   onToggleBackground: (value: BackgroundType) => void;
 }
 
@@ -58,29 +49,18 @@ function SelectGrid({
 }
 
 export function Step6Context({
-  entornos,
   antecedentes,
-  onToggleEnv,
   onToggleBackground,
 }: Step6ContextProps) {
   return (
     <section className="space-y-6">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 6</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Contexto del sistema</h2>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-900">Antecedentes</h2>
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-medium text-slate-700">¿En qué entorno ocurre el problema?</p>
-        <SelectGrid
-          selectedValues={entornos}
-          options={envOptions}
-          onToggle={(value) => onToggleEnv(value as EnvironmentType)}
-        />
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-slate-700">¿Tienes alguno de estos antecedentes?</p>
+        <p className="text-sm font-medium text-slate-700">¿Tienes alguna de estas condiciones de salud?</p>
         <SelectGrid
           selectedValues={antecedentes}
           options={backgroundOptions}

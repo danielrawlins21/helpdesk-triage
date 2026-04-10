@@ -9,7 +9,7 @@ import "../styles/global.css";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#1B4F72" />
-    <meta name="description" content="Triage mobile-first para helpdesk técnico." />
+    <meta name="description" content="Triage médico mobile-first con clasificación visual." />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <title>Triage Helpdesk</title>
@@ -20,8 +20,14 @@ import "../styles/global.css";
     </div>
     <script is:inline>
       if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/sw.js");
+        window.addEventListener("load", async () => {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+
+          if ("caches" in window) {
+            const cacheKeys = await caches.keys();
+            await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+          }
         });
       }
     </script>

@@ -13,10 +13,10 @@ export function AgentPanel({ tickets, onConfirm, onReclassify }: AgentPanelProps
   return (
     <section className="space-y-4">
       <header className="rounded-3xl bg-slate-900 px-5 py-6 text-white">
-        <p className="text-sm uppercase tracking-widest text-slate-300">Panel del agente</p>
+        <p className="text-sm uppercase tracking-widest text-slate-300">Panel Médico</p>
         <div className="mt-3 flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold">Tickets en cola</h2>
+            <h2 className="text-2xl font-semibold">Casos enviados por pacientes</h2>
             <p className="mt-1 text-sm text-slate-300">Clasificación visual en memoria.</p>
           </div>
           <span className="rounded-full bg-sky-900 px-4 py-2 text-sm font-semibold">{pending} pendientes</span>
@@ -25,7 +25,7 @@ export function AgentPanel({ tickets, onConfirm, onReclassify }: AgentPanelProps
 
       {tickets.length === 0 ? (
         <div className="rounded-2xl bg-white p-6 text-sm text-slate-600 ticket-shadow">
-          Todavía no hay tickets generados.
+          Todavía no hay pacientes enviados.
         </div>
       ) : (
         <div className="space-y-4">

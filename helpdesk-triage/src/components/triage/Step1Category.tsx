@@ -1,14 +1,14 @@
 import type { IncidentCategory } from "../../lib/types";
 
 const categoryOptions: Array<{ value: IncidentCategory; label: string }> = [
-  { value: "red", label: "Red / conectividad" },
-  { value: "hardware", label: "Hardware / dispositivo" },
-  { value: "software", label: "Software / aplicación" },
-  { value: "acceso", label: "Acceso / permisos" },
-  { value: "correo", label: "Correo / comunicaciones" },
-  { value: "datos", label: "Base de datos / datos" },
-  { value: "servidor", label: "Servidor / infraestructura" },
-  { value: "otro", label: "Otro problema" },
+  { value: "pecho", label: "Dolor en el pecho" },
+  { value: "respirar", label: "Me cuesta respirar" },
+  { value: "fiebre", label: "Fiebre / escalofríos" },
+  { value: "golpe", label: "Golpe / herida / accidente" },
+  { value: "barriga", label: "Dolor de barriga" },
+  { value: "embarazo", label: "Embarazo / ginecológico" },
+  { value: "mareo", label: "Mareo / confusión / desmayo" },
+  { value: "otro", label: "Otro malestar" },
 ];
 
 interface Step1CategoryProps {
@@ -22,9 +22,10 @@ export function Step1Category({ value, error, onSelect }: Step1CategoryProps) {
     <section className="space-y-4">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Paso 1</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-900">
-          ¿Cuál es el tipo de problema?
-        </h2>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-900">¿Cuál es tu molestia principal?</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Selecciona la que más te preocupa ahora mismo.
+        </p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {categoryOptions.map((option) => {

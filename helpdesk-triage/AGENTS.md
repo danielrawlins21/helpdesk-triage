@@ -24,7 +24,9 @@ Frontend visual en Astro 5 con una isla React para el flujo completo del formula
 - No usar Anthropic ni claves API para este flujo.
 - No persistir conversaciones; el estado del chat debe permanecer en memoria.
 - El frontend solo debe hablar con el proxy local y el proxy con Ollama.
-- Scripts relacionados: `dev:chat` para levantar Astro y el proxy juntos, y `chat:proxy` para iniciar solo el proxy.
+- El selector de proveedor vive en la pantalla de espera y usa `VITE_CHAT_PROVIDER`, `VITE_OLLAMA_CHAT_PROXY_URL` y `VITE_BEDROCK_CHAT_PROXY_URL`.
+- Bedrock usa un proxy Node separado con `npm run bedrock:proxy` y requiere `BEDROCK_REGION`, `BEDROCK_MODEL_ID` y lista de origenes permitidos.
+- Scripts relacionados: `dev:chat` para levantar Astro y el proxy juntos, `chat:proxy` para Ollama y `bedrock:proxy` para Bedrock.
 
 ## Service Worker y Cache
 - El registro del service worker esta desactivado actualmente en la app para evitar errores de cache durante desarrollo.

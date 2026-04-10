@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
   buildChatPatientContext,
+  chatProviderOptions,
   getChatFallbackMessage,
   getWelcomeMessage,
   suggestionsByLevel,
+  type ChatProvider,
   type ChatMessage,
   type ChatPatientContext,
   type ChatResponse,
@@ -16,7 +18,16 @@ interface WaitChatProps {
   ticket: TicketRecord;
 }
 
-const proxyUrl = import.meta.env.VITE_CHAT_PROXY_URL ?? "http://127.0.0.1:8787/api/chat";
+const proxyUrls: Record<ChatProvider, string> = {
+  ollama: import.meta.env.VITE_OLLAMA_CHAT_PROXY_URL ?? "http://127.0.0.1:8787/api/chat",
+  bedrock: import.meta.env.VITE_BEDROCK_CHAT_PROXY_URL ?? "",
+};
+
+const defaultProvider = (import.meta.env.VITE_CHAT_PROVIDER as ChatProvider | undefined) ?? "ollama";
+
+function getProviderLabel(provider: ChatProvider) {
+  return chatProviderOptions.find((option) => option.value === provider)?.label ?? provider;
+}
 
 function getHealthUrl(chatUrl: string) {
   const url = new URL(chatUrl, window.location.origin);
@@ -24,15 +35,17 @@ function getHealthUrl(chatUrl: string) {
   return url.toString();
 }
 
-function getStatusLabel(status: ChatStatus, model: string | null) {
+function getStatusLabel(status: ChatStatus, model: string | null, provider: ChatProvider) {
+  const providerLabel = getProviderLabel(provider);
+
   if (status === "connecting") return "Conectando con Ollama...";
   if (status === "typing") return "Escribiendo...";
-  if (status === "offline") return "Ollama no disponible";
-  return model ? `En línea · ${model}` : "En línea";
+  if (status === "offline") return `${providerLabel} no disponible`;
+  return model ? `En línea · ${providerLabel} · ${model}` : `En línea · ${providerLabel}`;
 }
 
-async function requestChatReply(messages: ChatMessage[], context: ChatPatientContext) {
-  const response = await fetch(proxyUrl, {
+async function requestChatReply(chatUrl: string, messages: ChatMessage[], context: ChatPatientContext) {
+  const response = await fetch(chatUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -48,8 +61,8 @@ async function requestChatReply(messages: ChatMessage[], context: ChatPatientCon
   return response.json() as Promise<ChatResponse>;
 }
 
-async function requestChatHealth() {
-  const response = await fetch(getHealthUrl(proxyUrl));
+async function requestChatHealth(chatUrl: string) {
+  const response = await fetch(getHealthUrl(chatUrl));
 
   if (!response.ok) {
     throw new Error(`Chat health request failed with status ${response.status}`);
@@ -60,6 +73,7 @@ async function requestChatHealth() {
 
 export function WaitChat({ ticket }: WaitChatProps) {
   const context = buildChatPatientContext(ticket);
+  const [provider, setProvider] = useState<ChatProvider>(defaultProvider);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       role: "assistant",
@@ -70,10 +84,12 @@ export function WaitChat({ ticket }: WaitChatProps) {
   const [status, setStatus] = useState<ChatStatus>("connecting");
   const [model, setModel] = useState<string | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const chatUrl = proxyUrls[provider];
+  const providerConfigured = chatUrl.length > 0;
 
   const suggestions = suggestionsByLevel[ticket.classification.level];
   const isBusy = status === "typing" || status === "connecting";
-  const canSend = status === "online";
+  const canSend = status === "online" && providerConfigured;
 
   useEffect(() => {
     setMessages([
@@ -90,8 +106,14 @@ export function WaitChat({ ticket }: WaitChatProps) {
   async function checkHealth() {
     setStatus("connecting");
 
+    if (!providerConfigured) {
+      setModel(null);
+      setStatus("offline");
+      return;
+    }
+
     try {
-      const data = await requestChatHealth();
+      const data = await requestChatHealth(chatUrl);
       setModel(data.model);
       setStatus("online");
     } catch {
@@ -104,8 +126,15 @@ export function WaitChat({ ticket }: WaitChatProps) {
     let active = true;
 
     async function checkInitialHealth() {
+      if (!providerConfigured) {
+        if (!active) return;
+        setModel(null);
+        setStatus("offline");
+        return;
+      }
+
       try {
-        const data = await requestChatHealth();
+        const data = await requestChatHealth(chatUrl);
         if (!active) return;
         setModel(data.model);
         setStatus("online");
@@ -121,7 +150,7 @@ export function WaitChat({ ticket }: WaitChatProps) {
     return () => {
       active = false;
     };
-  }, [ticket.id]);
+  }, [ticket.id, chatUrl, providerConfigured]);
 
   useEffect(() => {
     messagesRef.current?.scrollTo({
@@ -140,7 +169,7 @@ export function WaitChat({ ticket }: WaitChatProps) {
     setStatus("typing");
 
     try {
-      const data = await requestChatReply(nextMessages, context);
+      const data = await requestChatReply(chatUrl, nextMessages, context);
       setMessages((current) => [
         ...current,
         {
@@ -176,9 +205,50 @@ export function WaitChat({ ticket }: WaitChatProps) {
         </div>
         <div>
           <h3 className="text-sm font-semibold">Asistente de espera</h3>
-          <p className="mt-0.5 text-[11px] text-white/70">{getStatusLabel(status, model)}</p>
+          <p className="mt-0.5 text-[11px] text-white/70">{getStatusLabel(status, model, provider)}</p>
         </div>
       </header>
+
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor={`chat-provider-${ticket.id}`} className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Proveedor
+            </label>
+            <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
+              Configuración
+            </span>
+          </div>
+
+          <select
+            id={`chat-provider-${ticket.id}`}
+            value={provider}
+            onChange={(event) => {
+              setProvider(event.target.value as ChatProvider);
+              setStatus("connecting");
+              setModel(null);
+            }}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          >
+            {chatProviderOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <p className="text-xs leading-5 text-slate-500">
+            {chatProviderOptions.find((option) => option.value === provider)?.description}
+          </p>
+
+          {!providerConfigured ? (
+            <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+              Este proveedor no tiene un proxy configurado todavía. Define la variable de entorno correspondiente
+              para poder usarlo.
+            </p>
+          ) : null}
+        </div>
+      </div>
 
       <div ref={messagesRef} className="max-h-80 space-y-3 overflow-y-auto bg-slate-50 px-3 py-4">
         {messages.map((message, index) => (
@@ -208,7 +278,7 @@ export function WaitChat({ ticket }: WaitChatProps) {
 
         {status === "offline" ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-            No puedo conectar con el proxy local. Ejecuta <span className="font-semibold">npm run dev:chat</span> o levanta <span className="font-semibold">npm run chat:proxy</span> y vuelve a intentar.
+            No puedo conectar con el proveedor seleccionado. Ejecuta <span className="font-semibold">npm run dev:chat</span> o levanta <span className="font-semibold">npm run chat:proxy</span> y vuelve a intentar.
           </div>
         ) : null}
       </div>

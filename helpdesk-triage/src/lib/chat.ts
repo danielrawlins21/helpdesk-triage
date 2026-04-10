@@ -1,5 +1,24 @@
 import type { Specialty, TicketLevel, TicketRecord } from "./types";
 
+export type ChatProvider = "ollama" | "bedrock";
+
+export const chatProviderOptions: Array<{
+  value: ChatProvider;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "ollama",
+    label: "Ollama local",
+    description: "Usa el proxy Node local del chatbot.",
+  },
+  {
+    value: "bedrock",
+    label: "Bedrock / Claude",
+    description: "Usa un proxy seguro hacia AWS Bedrock.",
+  },
+];
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;

@@ -73,6 +73,32 @@ El chatbot de acompanamiento usa Ollama en local mediante un proxy Node separado
 No usa Anthropic, no usa claves API y no persiste conversaciones.
 El frontend llama solo al proxy local; el proxy habla con Ollama.
 
+Desde la pantalla de espera puedes elegir el proveedor del chat en la seccion de configuracion. Por defecto
+se usa Ollama local.
+
+Variables de entorno utiles:
+
+- `VITE_CHAT_PROVIDER`: proveedor inicial (`ollama` o `bedrock`)
+- `VITE_OLLAMA_CHAT_PROXY_URL`: URL del proxy de Ollama
+- `VITE_BEDROCK_CHAT_PROXY_URL`: URL del proxy para Bedrock
+
+Para Bedrock, el proxy seguro se ejecuta con:
+
+```bash
+npm run bedrock:proxy
+```
+
+Variables de entorno utiles para Bedrock:
+
+- `BEDROCK_REGION`: region de AWS Bedrock
+- `BEDROCK_MODEL_ID`: modelo a invocar, por ejemplo `anthropic.claude-3-haiku-20240307-v1:0`
+- `BEDROCK_PROXY_HOST`: host local del proxy, por defecto `127.0.0.1`
+- `BEDROCK_PROXY_PORT`: puerto local del proxy, por defecto `8788`
+- `BEDROCK_PROXY_ALLOWED_ORIGINS`: origenes permitidos separados por comas
+- `BEDROCK_PROXY_TIMEOUT_MS`: tiempo maximo de espera por solicitud
+- `BEDROCK_MAX_TOKENS`: tokens maximos de respuesta
+- `BEDROCK_TEMPERATURE`: temperatura de muestreo
+
 Flujo local recomendado:
 
 ```bash

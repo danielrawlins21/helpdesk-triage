@@ -11,11 +11,11 @@
     "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/react": "^4.2.1",
-    "@tailwindcss/vite": "^4.1.4",
+    "@astrojs/check": "^0.9.8",
+    "@astrojs/react": "^5.0.3",
     "@hookform/resolvers": "^3.9.1",
-    "astro": "^5.3.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "astro": "^6.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.2",

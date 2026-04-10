@@ -181,22 +181,12 @@ export default function TriageApp() {
   }
 
   function updateTicket(id: string, updater: (ticket: TicketRecord) => TicketRecord) {
-    let updatedTicket: TicketRecord | null = null;
-
     setTickets((current) =>
       current.map((ticket) => {
         if (ticket.id !== id) return ticket;
-        const nextTicket = updater(ticket);
-        updatedTicket = nextTicket;
-        return nextTicket;
+        return updater(ticket);
       }),
     );
-
-    if (updatedTicket?.sourceKey) {
-      setCurrentTicket((currentPatientTicket) =>
-        currentPatientTicket?.sourceKey === updatedTicket?.sourceKey ? updatedTicket : currentPatientTicket,
-      );
-    }
   }
 
   function appendTicket(ticket: TicketRecord) {

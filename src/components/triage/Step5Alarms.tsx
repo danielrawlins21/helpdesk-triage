@@ -1,5 +1,18 @@
-import { getAlarmStats, getSpecialtyAlarmDefinition } from "../../lib/alarms";
+import { getSpecialtyAlarmDefinition } from "../../lib/alarms";
 import type { Alarms, Specialty } from "../../lib/types";
+
+type AlarmLevel = "prioritario" | "general";
+
+interface AlarmPresentationItem {
+  key: string;
+  text: string;
+  level: AlarmLevel;
+}
+
+interface AlarmPresentationSection {
+  title: string;
+  items: AlarmPresentationItem[];
+}
 
 interface Step5AlarmsProps {
   specialty: Specialty | "";
@@ -7,9 +20,65 @@ interface Step5AlarmsProps {
   onToggle: (key: string) => void;
 }
 
+const NONE_KEY = "ningunaSintoma";
+
+const levelStyles: Record<
+  AlarmLevel,
+  {
+    headerStyle: { backgroundColor: string; color: string };
+    selectedCardStyle: { backgroundColor: string; borderColor: string; color: string };
+    selectedRadioClassName: string;
+  }
+> = {
+  prioritario: {
+    headerStyle: { backgroundColor: "#FCEBEB", color: "#791F1F" },
+    selectedCardStyle: { backgroundColor: "#FCEBEB", borderColor: "#A32D2D", color: "#791F1F" },
+    selectedRadioClassName: "border-[#A32D2D] bg-[#A32D2D]",
+  },
+  general: {
+    headerStyle: { backgroundColor: "#FDF3E3", color: "#633806" },
+    selectedCardStyle: { backgroundColor: "#EAF3DE", borderColor: "#3B6D11", color: "#27470C" },
+    selectedRadioClassName: "border-[#3B6D11] bg-[#3B6D11]",
+  },
+};
+
 export function Step5Alarms({ specialty, value, onToggle }: Step5AlarmsProps) {
   const definition = getSpecialtyAlarmDefinition(specialty);
-  const { criticalCount } = getAlarmStats(value, specialty);
+  const sections: AlarmPresentationSection[] = definition.sections.map((section) => ({
+    title: section.title,
+    items: section.items.map((alarm) => ({
+      key: alarm.key,
+      text: alarm.text,
+      level: alarm.critical ? "prioritario" : "general",
+    })),
+  }));
+  const alarmKeys = sections.flatMap((section) => section.items.map((alarm) => alarm.key));
+  const selectedCount = alarmKeys.filter((key) => Boolean(value[key])).length;
+  const noneSelected = Boolean(value[NONE_KEY]);
+  const selectionMessage =
+    selectedCount === 0
+      ? "Ningún síntoma marcado"
+      : `${selectedCount} síntoma${selectedCount === 1 ? "" : "s"} marcado${selectedCount === 1 ? "" : "s"}`;
+
+  function handleAlarmToggle(key: string) {
+    if (noneSelected) {
+      onToggle(NONE_KEY);
+    }
+
+    onToggle(key);
+  }
+
+  function handleNoneSelect() {
+    alarmKeys.forEach((key) => {
+      if (value[key]) {
+        onToggle(key);
+      }
+    });
+
+    if (!noneSelected) {
+      onToggle(NONE_KEY);
+    }
+  }
 
   return (
     <section className="space-y-5">
@@ -23,12 +92,6 @@ export function Step5Alarms({ specialty, value, onToggle }: Step5AlarmsProps) {
         </p>
       </div>
 
-      {criticalCount > 0 ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-          Hay señales de alerta graves. Un médico debe revisarlo con prioridad.
-        </div>
-      ) : null}
-
       <div
         className="inline-flex rounded-full px-3 py-1.5 text-xs font-semibold"
         style={{ backgroundColor: `${definition.color}22`, color: definition.color }}
@@ -36,40 +99,65 @@ export function Step5Alarms({ specialty, value, onToggle }: Step5AlarmsProps) {
         {definition.label}
       </div>
 
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <p className="text-sm font-semibold text-slate-900">{selectionMessage}</p>
+      </div>
+
       <div className="space-y-4">
-        {definition.sections.map((section) => (
-          <div key={section.title} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">{section.title}</p>
-            <div className="space-y-2">
-              {section.items.map((alarm) => {
+        {sections.map((section) => {
+          const sectionLevel: AlarmLevel = section.items.some((alarm) => alarm.level === "prioritario")
+            ? "prioritario"
+            : "general";
+          const sectionStyle = levelStyles[sectionLevel];
+
+          return (
+            <div key={section.title} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-md px-[10px] py-[6px]" style={sectionStyle.headerStyle}>
+                <p className="text-[11px] font-semibold uppercase tracking-widest">{section.title}</p>
+              </div>
+              <div className="space-y-2">
+                {section.items.map((alarm) => {
                 const checked = Boolean(value[alarm.key]);
+                const levelStyle = levelStyles[alarm.level];
                 return (
                   <button
                     key={alarm.key}
                     type="button"
-                    onClick={() => onToggle(alarm.key)}
-                    className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm transition ${
-                      checked
-                        ? "border-red-300 bg-red-50 text-red-900 shadow-sm"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-blue-500 hover:bg-blue-50"
-                    }`}
+                    onClick={() => handleAlarmToggle(alarm.key)}
+                    aria-pressed={checked}
+                    className="flex min-h-11 w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                    style={checked ? levelStyle.selectedCardStyle : undefined}
                   >
                     <span
+                      aria-hidden="true"
                       className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                        checked ? "border-red-600 bg-red-600" : "border-slate-300 bg-white"
+                        checked ? levelStyle.selectedRadioClassName : "border-slate-300 bg-white"
                       }`}
-                    />
-                    <span>
-                      {alarm.critical ? <span className="font-semibold text-red-700">Crítico: </span> : null}
-                      {alarm.text}
+                    >
+                      <span className="h-2.5 w-2.5 rounded-full bg-white" />
                     </span>
+                    <span>{alarm.text}</span>
                   </button>
                 );
               })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      <button
+        type="button"
+        onClick={handleNoneSelect}
+        aria-pressed={noneSelected}
+        className={`flex min-h-11 w-full items-center justify-center rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
+          noneSelected
+            ? "border-slate-900 bg-slate-900 text-white"
+            : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+        }`}
+      >
+        No tengo ninguno de estos síntomas
+      </button>
     </section>
   );
 }
